@@ -5,6 +5,7 @@ import { MaintenanceTable } from './components/MaintenanceTable';
 import { MaintenanceForm } from './components/MaintenanceForm';
 import { MaintenanceReport } from './components/MaintenanceReport';
 import { OverdueAlert } from './components/OverdueAlert';
+import { MaintenanceReminder } from './components/MaintenanceReminder';
 import { maintenanceApi } from './services/api';
 import { MaintenanceRecord, TabType } from './types';
 import { Info, PlusCircle, FileText } from 'lucide-react';
@@ -21,6 +22,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showAlert, setShowAlert] = useState(false);
+  const [showReminder, setShowReminder] = useState(false);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -34,6 +36,7 @@ export default function App() {
     } finally {
       setIsLoading(false);
       setShowAlert(true);
+      setShowReminder(true);
     }
   };
 
@@ -173,6 +176,12 @@ export default function App() {
         data={data} 
         isOpen={showAlert} 
         onClose={() => setShowAlert(false)} 
+      />
+
+      <MaintenanceReminder 
+        data={data}
+        isOpen={showReminder}
+        onClose={() => setShowReminder(false)}
       />
     </Layout>
   );
