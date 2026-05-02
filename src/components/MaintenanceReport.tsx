@@ -295,6 +295,10 @@ export const MaintenanceReport: React.FC<MaintenanceReportProps> = ({
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Số lượt</span>
                 <span className="text-xs font-black text-primary">{filteredData.length}</span>
               </div>
+              <div className="flex flex-col items-center px-6 border-r border-slate-200">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tổng chi phí</span>
+                <span className="text-xs font-black text-emerald-600">{formatNumber(totalCost)} đ</span>
+              </div>
               <div className="flex flex-col items-center px-6">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Quãng đường</span>
                 <span className="text-xs font-black text-orange-600">{formatNumber(totalKm)} KM</span>
