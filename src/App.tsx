@@ -7,7 +7,7 @@ import { MaintenanceReport } from './components/MaintenanceReport';
 import { OverdueAlert } from './components/OverdueAlert';
 import { maintenanceApi } from './services/api';
 import { MaintenanceRecord, TabType } from './types';
-import { Info, PlusCircle, FileText, BarChart3 } from 'lucide-react';
+import { Info, PlusCircle, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 import { ReportStats } from './components/ReportStats';
@@ -76,15 +76,13 @@ export default function App() {
   const tabIcons = {
     info: <Info size={18} />,
     update: <PlusCircle size={18} />,
-    report: <FileText size={18} />,
-    stats: <BarChart3 size={18} />
+    report: <FileText size={18} />
   };
 
   const tabLabels = {
     info: 'Thông tin bảo trì',
     update: editingRecord ? 'Sửa thông tin' : 'Cập nhật bảo trì',
-    report: 'Lịch sử bảo dưỡng',
-    stats: 'Thống kê'
+    report: 'Lịch sử bảo dưỡng'
   };
 
   return (
@@ -167,10 +165,6 @@ export default function App() {
               selectedPlate={selectedPlate}
               onPlateChange={setSelectedPlate}
             />
-          )}
-
-          {!isLoading && activeTab === 'stats' && (
-            <ReportStats data={data} />
           )}
         </motion.div>
       </AnimatePresence>

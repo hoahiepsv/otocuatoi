@@ -10,7 +10,7 @@ export interface MaintenanceRecord {
   isDone: boolean;
 }
 
-export type TabType = 'info' | 'update' | 'report' | 'stats';
+export type TabType = 'info' | 'update' | 'report';
 
 export interface User {
   username: string;
