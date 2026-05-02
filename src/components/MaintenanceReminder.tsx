@@ -67,8 +67,9 @@ export const MaintenanceReminder: React.FC<MaintenanceReminderProps> = ({ data, 
                     <p className="text-[11px] font-medium text-slate-700 leading-snug">
                       {item.category}: {item.params}
                     </p>
-                    <div className="mt-1 flex items-center gap-1.5 text-[9px] text-slate-400 font-bold uppercase tracking-tighter">
-                      <span>Kỳ tới: {formatNumber(item.nextOdo)}</span>
+                    <div className="mt-1.5 flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-tighter">
+                      <span>Kỳ tới:</span>
+                      <span className="text-sm font-black text-orange-600">{formatNumber(item.nextOdo)} KM</span>
                     </div>
                   </div>
                 );
