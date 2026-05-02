@@ -1,0 +1,118 @@
+import React, { useState } from 'react';
+import { User, Lock, Car, ShieldAlert } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+
+interface LoginProps {
+  onLogin: (username: string) => void;
+}
+
+export const Login: React.FC<LoginProps> = ({ onLogin }) => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    // Simulate network delay
+    setTimeout(() => {
+      if (username === 'lehoahiep' && password === 'Lhh249111') {
+        onLogin(username);
+      } else {
+        setError('Tên đăng nhập hoặc mật khẩu không chính xác');
+      }
+      setIsLoading(false);
+    }, 800);
+  };
+
+  return (
+    <div className="min-h-screen bg-blue-600 flex items-center justify-center p-4">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
+      >
+        <div className="p-8">
+          <div className="flex flex-col items-center mb-8">
+            <div className="bg-blue-600 p-4 rounded-2xl text-white mb-4 shadow-lg shadow-blue-200">
+              <Car size={40} />
+            </div>
+            <h1 className="text-2xl font-bold text-slate-800 uppercase tracking-wide">BẢO TRÌ Ô TÔ</h1>
+            <p className="text-slate-500 text-sm mt-1">Đăng nhập để quản lý hệ thống</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-700 ml-1">Tên đăng nhập</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <User size={18} />
+                </div>
+                <input
+                  type="text"
+                  required
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all placeholder:text-slate-300"
+                  placeholder="Nhập username..."
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-700 ml-1">Mật khẩu</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <Lock size={18} />
+                </div>
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all placeholder:text-slate-300"
+                  placeholder="Nhập mật khẩu..."
+                />
+              </div>
+            </div>
+
+            <AnimatePresence>
+              {error && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="bg-red-50 text-red-600 p-3 rounded-lg text-sm flex items-center gap-2 border border-red-100"
+                >
+                  <ShieldAlert size={16} />
+                  <span>{error}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-blue-200 flex items-center justify-center disabled:opacity-70"
+            >
+              {isLoading ? (
+                <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              ) : (
+                'ĐĂNG NHẬP'
+              )}
+            </button>
+          </form>
+        </div>
+        
+        <div className="bg-slate-50 p-4 border-t border-slate-100 text-center">
+          <p className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">
+            Create by Hoà Hiệp AI – 0983.676.470
+          </p>
+        </div>
+      </motion.div>
+    </div>
+  );
+};

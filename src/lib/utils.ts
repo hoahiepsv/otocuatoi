@@ -1,0 +1,96 @@
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+export function formatNumber(num: number | string): string {
+  const val = typeof num === 'string' ? parseFloat(num.replace(/\./g, '')) : num;
+  if (isNaN(val)) return '0';
+  return val.toLocaleString('vi-VN').replace(/,/g, '.');
+}
+
+export function parseFormattedNumber(str: string): number {
+  return parseFloat(str.replace(/\./g, '').replace(/,/g, '')) || 0;
+}
+
+export function formatDateDisplay(dateStr: string): string {
+  if (!dateStr) return '';
+  
+  // Clean ISO stuff
+  const cleanStr = dateStr.split('T')[0];
+  
+  // Check if it's already DD-MM-YYYY
+  if (/^\d{2}-\d{2}-\d{4}$/.test(cleanStr)) {
+    return cleanStr;
+  }
+
+  // Handle YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(cleanStr)) {
+    const parts = cleanStr.split('-');
+    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+  }
+
+  // Handle DD/MM/YYYY
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(cleanStr)) {
+    const parts = cleanStr.split('/');
+    return `${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}-${parts[2]}`;
+  }
+  
+  return cleanStr;
+}
+
+export function formatDateForInput(displayDate: string): string {
+  if (!displayDate) return '';
+  
+  // DD-MM-YYYY -> YYYY-MM-DD
+  if (displayDate.includes('-')) {
+    const parts = displayDate.split('-');
+    if (parts.length === 3 && parts[2].length === 4) {
+      return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+    }
+    // Already YYYY-MM-DD
+    if (parts.length === 3 && parts[0].length === 4) {
+      return displayDate;
+    }
+  }
+
+  // DD/MM/YYYY -> YYYY-MM-DD
+  if (displayDate.includes('/')) {
+    const parts = displayDate.split('/');
+    if (parts.length === 3) {
+      return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+    }
+  }
+
+  return displayDate;
+}
+
+export function toSortableDate(dateStr: string): string {
+  if (!dateStr) return '';
+  
+  // If DD-MM-YYYY
+  if (/^\d{2}-\d{2}-\d{4}$/.test(dateStr)) {
+    const parts = dateStr.split('-');
+    return `${parts[2]}${parts[1]}${parts[0]}`;
+  }
+
+  // If DD/MM/YYYY
+  if (dateStr.includes('/')) {
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      return `${parts[2]}${parts[1].padStart(2, '0')}${parts[0].padStart(2, '0')}`;
+    }
+  }
+  
+  // If YYYY-MM-DD
+  if (dateStr.includes('-')) {
+    const parts = dateStr.split('-');
+    if (parts.length === 3 && parts[0].length === 4) {
+      return `${parts[0]}${parts[1].padStart(2, '0')}${parts[2].padStart(2, '0')}`;
+    }
+  }
+  
+  return dateStr;
+}
