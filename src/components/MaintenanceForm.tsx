@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Save, PlusCircle, RotateCcw } from 'lucide-react';
 import { MaintenanceRecord } from '../types';
-import { formatNumber, parseFormattedNumber, formatDateForInput, formatDateDisplay } from '../lib/utils';
+import { formatNumber, parseFormattedNumber, formatDateForInput, formatDateDisplay, getTodayDateInput } from '../lib/utils';
 import { motion } from 'motion/react';
 
 interface MaintenanceFormProps {
@@ -23,7 +23,7 @@ export const MaintenanceForm: React.FC<MaintenanceFormProps> = ({
 }) => {
   const [formData, setFormData] = useState({
     licensePlate: defaultPlate === 'ALL' ? '' : defaultPlate,
-    date: new Date().toISOString().split('T')[0],
+    date: getTodayDateInput(),
     category: '',
     params: '',
     odo: '0',
