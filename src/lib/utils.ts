@@ -18,13 +18,30 @@ export function parseFormattedNumber(str: string): number {
 export function formatDateDisplay(dateStr: string): string {
   if (!dateStr) return '';
   
-  // Clean ISO stuff
-  const cleanStr = dateStr.split('T')[0];
+  let cleanStr = dateStr;
   
-  // Check if it's already DD-MM-YYYY
-  if (/^\d{2}-\d{2}-\d{4}$/.test(cleanStr)) {
-    return cleanStr;
+  // Handle full ISO strings (from Apps Script/JSON)
+  if (dateStr.includes('T') || (dateStr.includes('Z') && !dateStr.includes('-'))) {
+    try {
+      const d = new Date(dateStr);
+      if (!isNaN(d.getTime())) {
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        return `${dd}-${mm}-${yyyy}`;
+      }
+    } catch (e) {
+      // Fallback if Date parsing fails
+    }
   }
+
+  // Check if it's already DD-MM-YYYY
+  if (/^\d{2}-\d{2}-\d{4}$/.test(dateStr)) {
+    return dateStr;
+  }
+  
+  // Clean potential time part if any remains
+  cleanStr = dateStr.split('T')[0];
 
   // Handle YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}$/.test(cleanStr)) {
@@ -39,6 +56,14 @@ export function formatDateDisplay(dateStr: string): string {
   }
   
   return cleanStr;
+}
+
+export function getTodayDateInput(): string {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 export function formatDateForInput(displayDate: string): string {
