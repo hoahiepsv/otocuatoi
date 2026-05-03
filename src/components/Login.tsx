@@ -4,11 +4,14 @@ import { motion, AnimatePresence } from 'motion/react';
 
 interface LoginProps {
   onLogin: (username: string) => void;
+  onQuickView: (plate: string) => void;
 }
 
-export const Login: React.FC<LoginProps> = ({ onLogin }) => {
+export const Login: React.FC<LoginProps> = ({ onLogin, onQuickView }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [quickPlate, setQuickPlate] = useState('');
+  const [showQuickInput, setShowQuickInput] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -26,6 +29,13 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
       }
       setIsLoading(false);
     }, 800);
+  };
+
+  const handleQuickView = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (quickPlate.trim()) {
+      onQuickView(quickPlate.toUpperCase().trim());
+    }
   };
 
   return (
@@ -105,6 +115,53 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
               )}
             </button>
           </form>
+
+          <div className="mt-8 pt-6 border-t border-slate-100">
+            {!showQuickInput ? (
+              <button 
+                onClick={() => setShowQuickInput(true)}
+                className="w-full bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold py-3 rounded-xl transition-all border border-slate-200 flex items-center justify-center gap-2 text-sm"
+              >
+                <Car size={18} className="text-blue-500" />
+                XEM NHANH NHẮC NHỞ BẢO TRÌ
+              </button>
+            ) : (
+              <motion.form 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                onSubmit={handleQuickView} 
+                className="space-y-4"
+              >
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Nhập biển số xe:</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      required
+                      autoFocus
+                      value={quickPlate}
+                      onChange={(e) => setQuickPlate(e.target.value)}
+                      className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold uppercase"
+                      placeholder=""
+                    />
+                    <button 
+                      type="submit"
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 rounded-lg font-black text-xs transition-all shadow-md active:scale-95"
+                    >
+                      XEM
+                    </button>
+                  </div>
+                </div>
+                <button 
+                  type="button"
+                  onClick={() => setShowQuickInput(false)}
+                  className="w-full text-[10px] font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest"
+                >
+                  Quay lại đăng nhập
+                </button>
+              </motion.form>
+            )}
+          </div>
         </div>
         
         <div className="bg-slate-50 p-4 border-t border-slate-100 text-center">

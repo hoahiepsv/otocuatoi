@@ -140,29 +140,29 @@ export const MaintenanceReport: React.FC<MaintenanceReportProps> = ({
     <div className="space-y-4">
       {/* Search & Period Filter Controls */}
       <div className="bg-white p-4 rounded-lg border border-app-border shadow-sm space-y-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex flex-col gap-1">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Chọn xe:</span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap items-end gap-4 uppercase">
+          <div className="flex flex-col gap-1 w-full lg:w-auto">
+            <span className="text-[10px] font-black text-slate-400 tracking-widest pl-1 leading-none">Chọn xe:</span>
             <select 
               value={selectedPlate}
               onChange={(e) => onPlateChange(e.target.value)}
-              className="bg-slate-50 border border-slate-200 rounded px-3 py-1.5 outline-none focus:ring-1 focus:ring-primary text-[12px] font-bold text-primary min-w-[150px]"
+              className="bg-slate-50 border border-slate-200 rounded px-3 py-1.5 outline-none focus:ring-1 focus:ring-primary text-[12px] font-bold text-primary w-full lg:min-w-[150px]"
             >
               <option value="ALL">TẤT CẢ XE</option>
               {plates.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
           </div>
 
-          <div className="flex flex-col gap-1">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Phạm vi:</span>
-            <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded">
+          <div className="flex flex-col gap-1 w-full lg:w-auto">
+            <span className="text-[10px] font-black text-slate-400 tracking-widest pl-1 leading-none">Phạm vi:</span>
+            <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded w-full">
               {(['all', 'month', 'year', 'range'] as const).map((type) => (
                 <button
                   key={type}
                   onClick={() => setPeriodType(type)}
-                  className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all ${periodType === type ? 'bg-primary text-white shadow-sm' : 'text-slate-500 hover:bg-slate-200'}`}
+                  className={`flex-1 lg:flex-none px-2 sm:px-3 py-1 rounded text-[9px] sm:text-[10px] font-black uppercase transition-all ${periodType === type ? 'bg-primary text-white shadow-sm' : 'text-slate-500 hover:bg-slate-200'}`}
                 >
-                  {type === 'all' ? 'Toàn bộ' : type === 'month' ? 'Tháng' : type === 'year' ? 'Năm' : 'Khoảng'}
+                  {type === 'all' ? 'Tất' : type === 'month' ? 'Tháng' : type === 'year' ? 'Năm' : 'Khoảng'}
                 </button>
               ))}
             </div>
@@ -170,34 +170,34 @@ export const MaintenanceReport: React.FC<MaintenanceReportProps> = ({
 
           {periodType === 'range' && (
             <>
-              <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Từ ngày:</span>
+              <div className="flex flex-col gap-1 w-full sm:w-auto">
+                <span className="text-[10px] font-black text-slate-400 tracking-widest pl-1 leading-none">Từ ngày:</span>
                 <input 
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="bg-slate-50 border border-slate-200 rounded px-3 py-1.5 outline-none text-[12px] font-bold"
+                  className="bg-slate-50 border border-slate-200 rounded px-3 py-1.5 outline-none text-[12px] font-bold w-full"
                 />
               </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Đến ngày:</span>
+              <div className="flex flex-col gap-1 w-full sm:w-auto">
+                <span className="text-[10px] font-black text-slate-400 tracking-widest pl-1 leading-none">Đến ngày:</span>
                 <input 
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="bg-slate-50 border border-slate-200 rounded px-3 py-1.5 outline-none text-[12px] font-bold"
+                  className="bg-slate-50 border border-slate-200 rounded px-3 py-1.5 outline-none text-[12px] font-bold w-full"
                 />
               </div>
             </>
           )}
 
           {periodType === 'month' && (
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Tháng:</span>
+            <div className="flex flex-col gap-1 w-full sm:w-auto">
+              <span className="text-[10px] font-black text-slate-400 tracking-widest pl-1 leading-none">Tháng:</span>
               <select 
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                className="bg-slate-50 border border-slate-200 rounded px-3 py-1.5 outline-none text-[12px] font-bold"
+                className="bg-slate-50 border border-slate-200 rounded px-3 py-1.5 outline-none text-[12px] font-bold w-full"
               >
                 {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>Tháng {m}</option>)}
               </select>
@@ -205,57 +205,104 @@ export const MaintenanceReport: React.FC<MaintenanceReportProps> = ({
           )}
 
           {(periodType === 'month' || periodType === 'year') && (
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Năm:</span>
+            <div className="flex flex-col gap-1 w-full sm:w-auto">
+              <span className="text-[10px] font-black text-slate-400 tracking-widest pl-1 leading-none">Năm:</span>
               <select 
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                className="bg-slate-50 border border-slate-200 rounded px-3 py-1.5 outline-none text-[12px] font-bold"
+                className="bg-slate-50 border border-slate-200 rounded px-3 py-1.5 outline-none text-[12px] font-bold w-full"
               >
                 {years.map(y => <option key={y} value={y}>Năm {y}</option>)}
               </select>
             </div>
           )}
 
-          <div className="flex-1"></div>
-
-          <button 
-            onClick={exportReport}
-            disabled={isExporting}
-            className="self-end bg-primary hover:bg-primary-hover text-white font-black py-2 px-6 rounded text-[11px] transition-all flex items-center gap-2 shadow-md disabled:opacity-50 uppercase tracking-wider"
-          >
-            {isExporting ? <div className="h-3 w-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <><Download size={14} /><span>XUẤT JPEG HD</span></>}
-          </button>
+          <div className="lg:ml-auto w-full lg:w-auto pt-2 lg:pt-0">
+            <button 
+              onClick={exportReport}
+              disabled={isExporting}
+              className="w-full bg-primary hover:bg-primary-hover text-white font-black py-2 px-6 rounded text-[11px] transition-all flex items-center justify-center gap-2 shadow-md disabled:opacity-50 uppercase tracking-widest"
+            >
+              {isExporting ? <div className="h-3 w-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <><Download size={14} /><span>XUẤT JPEG HD</span></>}
+            </button>
+          </div>
         </div>
 
         {/* Quick Stats Summary */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="bg-slate-50 p-3 rounded border border-slate-100">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">Tổng chi phí</p>
-            <p className="text-lg font-black text-slate-900 leading-none">{formatNumber(totalCost)} <span className="text-[10px] font-bold opacity-30">VNĐ</span></p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+          <div className="bg-slate-50 p-2 sm:p-3 rounded border border-slate-100">
+            <p className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1 sm:mb-1.5">Tổng chi phí</p>
+            <p className="text-sm sm:text-lg font-black text-slate-900 leading-none">{formatNumber(totalCost)} <span className="text-[8px] sm:text-[10px] font-bold opacity-30">VNĐ</span></p>
           </div>
-          <div className="bg-slate-50 p-3 rounded border border-slate-100">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">Quãng đường đi</p>
-            <p className="text-lg font-black text-orange-600 leading-none">{formatNumber(totalKm)} <span className="text-[10px] font-bold opacity-30">KM</span></p>
+          <div className="bg-slate-50 p-2 sm:p-3 rounded border border-slate-100">
+            <p className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1 sm:mb-1.5">Quãng đường</p>
+            <p className="text-sm sm:text-lg font-black text-orange-600 leading-none">{formatNumber(totalKm)} <span className="text-[8px] sm:text-[10px] font-bold opacity-30">KM</span></p>
           </div>
-          <div className="bg-slate-50 p-3 rounded border border-slate-100">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">Số lần bảo trì</p>
-            <p className="text-lg font-black text-primary leading-none">{filteredData.length} <span className="text-[10px] font-bold opacity-30">LƯỢT</span></p>
+          <div className="bg-slate-50 p-2 sm:p-3 rounded border border-slate-100">
+            <p className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1 sm:mb-1.5">Số lần</p>
+            <p className="text-sm sm:text-lg font-black text-primary leading-none">{filteredData.length} <span className="text-[8px] sm:text-[10px] font-bold opacity-30">LƯỢT</span></p>
           </div>
-          <div className="bg-slate-50 p-3 rounded border border-slate-100">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">Avg/Lượt</p>
-            <p className="text-lg font-black text-slate-600 leading-none">{filteredData.length > 0 ? formatNumber(Math.round(totalCost / filteredData.length)) : '0'} <span className="text-[10px] font-bold opacity-30">VNĐ</span></p>
+          <div className="bg-slate-50 p-2 sm:p-3 rounded border border-slate-100">
+            <p className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1 sm:mb-1.5">Trung bình</p>
+            <p className="text-sm sm:text-lg font-black text-slate-600 leading-none">{filteredData.length > 0 ? formatNumber(Math.round(totalCost / filteredData.length)) : '0'} <span className="text-[8px] sm:text-[10px] font-bold opacity-30">VNĐ</span></p>
           </div>
         </div>
       </div>
 
-      <div className="bg-slate-900/5 p-4 rounded-lg overflow-auto flex justify-center border border-app-border">
+      <div className="bg-slate-900/5 p-4 rounded-lg overflow-x-auto border border-app-border">
+        {/* Mobile-only List View */}
+        <div className="md:hidden space-y-3 mb-4">
+          <div className="bg-blue-600 p-3 rounded-t-lg text-white font-black text-xs uppercase tracking-widest text-center shadow-lg">
+            DANH SÁCH LỊCH SỬ CHI TIẾT
+          </div>
+          {filteredData.length === 0 ? (
+            <div className="bg-white p-12 text-center text-slate-400 italic text-[11px] rounded-b-lg border border-slate-200">
+              Không tìm thấy dữ liệu.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredData.map((item, idx) => (
+                <div key={item.id} className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm space-y-2">
+                  <div className="flex justify-between items-start border-b border-slate-100 pb-2">
+                    <span className={`font-black text-xs uppercase ${getPlateColor(item.licensePlate)}`}>{item.licensePlate}</span>
+                    <span className="text-[10px] font-bold text-slate-400">{item.date}</span>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[12px] font-bold text-slate-800">{item.category}</p>
+                    {item.params && <p className="text-[10px] text-slate-400 uppercase font-medium">{item.params}</p>}
+                  </div>
+                  <div className="flex justify-between items-end pt-2">
+                    <div className="flex flex-col">
+                      <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Odo / Kế tiếp</span>
+                      <span className="text-[10px] font-bold text-slate-600">
+                        {formatNumber(item.odo)} <span className="text-orange-400">→ {item.nextOdo > 0 ? formatNumber(item.nextOdo) : '-'}</span>
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Thành tiền</span>
+                      <p className="text-sm font-black text-slate-900 leading-none">{formatNumber(item.unitPrice)} đ</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="bg-blue-900 p-3 rounded-b-lg text-white flex justify-between items-center shadow-md">
+            <span className="text-[10px] font-black uppercase tracking-widest">Tổng cộng:</span>
+            <span className="text-sm font-black">{formatNumber(totalCost)} đ</span>
+          </div>
+          
+        </div>
+
         {/* Printable Area - Pre-optimized for JPG Export */}
-        <div 
-          ref={reportRef}
-          className="bg-white w-[1100px] min-h-[1400px] p-12 shadow-2xl relative flex flex-col items-center border-[12px] border-slate-100"
-          style={{ fontFamily: "'Times New Roman', serif" }}
-        >
+        {/* This container ensures the report is always available in DOM for export, but hidden from mobile view */}
+        <div className="flex justify-center w-full md:static absolute left-[-9999px] top-0 pointer-events-none md:pointer-events-auto overflow-hidden md:overflow-visible h-0 md:h-auto">
+          <div className="scale-[0.35] sm:scale-[0.5] md:scale-[0.7] lg:scale-100 origin-top">
+            <div 
+              ref={reportRef}
+              className="bg-white w-[1100px] min-h-[1400px] p-12 shadow-2xl relative flex flex-col items-center border-[12px] border-slate-100 overflow-hidden"
+              style={{ fontFamily: "'Times New Roman', serif" }}
+            >
           {/* Top Header Decor */}
           <div className="absolute top-0 left-0 w-full h-2 bg-blue-900"></div>
 
@@ -382,5 +429,7 @@ export const MaintenanceReport: React.FC<MaintenanceReportProps> = ({
         </div>
       </div>
     </div>
-  );
+  </div>
+</div>
+);
 };

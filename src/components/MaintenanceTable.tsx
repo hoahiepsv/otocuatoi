@@ -18,13 +18,43 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
   selectedPlate, 
   onPlateChange 
 }) => {
+  const [sortConfig, setSortConfig] = React.useState<{ key: keyof MaintenanceRecord | 'status'; direction: 'asc' | 'desc' } | null>(null);
+
   const plates = Array.from(new Set(data.map(item => item.licensePlate))).sort();
   
+  const handleSort = (key: keyof MaintenanceRecord | 'status') => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
   const filteredData = (selectedPlate === 'ALL' 
     ? data 
     : data.filter(item => item.licensePlate === selectedPlate)
   ).sort((a, b) => {
-    // Sort by plate first
+    if (sortConfig) {
+      const { key, direction } = sortConfig;
+      let valA: any = a[key as keyof MaintenanceRecord];
+      let valB: any = b[key as keyof MaintenanceRecord];
+
+      if (key === 'status') {
+        valA = a.isDone;
+        valB = b.isDone;
+      }
+
+      if (key === 'date') {
+        valA = toSortableDate(a.date);
+        valB = toSortableDate(b.date);
+      }
+
+      if (valA < valB) return direction === 'asc' ? -1 : 1;
+      if (valA > valB) return direction === 'asc' ? 1 : -1;
+      return 0;
+    }
+
+    // Default Sort: Sort by plate first
     if (a.licensePlate !== b.licensePlate) {
       return a.licensePlate.localeCompare(b.licensePlate);
     }
@@ -119,15 +149,60 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
           <table className="w-full text-left border-collapse text-[13px]">
             <thead>
               <tr className="bg-slate-50 border-b border-app-border">
-                <th className="px-3 py-2 font-bold text-slate-400 uppercase tracking-tighter text-[10px]">Số xe</th>
-                <th className="px-3 py-2 font-bold text-slate-400 uppercase tracking-tighter text-[10px]">Ngày</th>
-                <th className="px-3 py-2 font-bold text-slate-400 uppercase tracking-tighter text-[10px]">Hạng mục</th>
-                <th className="px-3 py-2 font-bold text-slate-400 uppercase tracking-tighter text-[10px]">Thông số</th>
-                <th className="px-3 py-2 font-bold text-slate-400 uppercase tracking-tighter text-[10px] text-right">Odo</th>
-                <th className="px-3 py-2 font-bold text-slate-400 uppercase tracking-tighter text-[10px] text-right">Kỳ tới</th>
-                <th className="px-3 py-2 font-bold text-slate-400 uppercase tracking-tighter text-[10px] text-right">Đơn giá</th>
-                <th className="px-3 py-2 font-bold text-slate-400 uppercase tracking-tighter text-[10px] text-center">Status</th>
-                <th className="px-3 py-2 font-bold text-slate-400 uppercase tracking-tighter text-[10px] text-center">Xử lý</th>
+                <th 
+                  onClick={() => handleSort('licensePlate')}
+                  className="px-3 py-2 font-bold text-slate-400 uppercase tracking-tighter text-[10px] cursor-pointer hover:bg-slate-100 transition-colors"
+                >
+                  Số xe {sortConfig?.key === 'licensePlate' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th 
+                  onClick={() => handleSort('date')}
+                  className="px-3 py-2 font-bold text-slate-400 uppercase tracking-tighter text-[10px] cursor-pointer hover:bg-slate-100 transition-colors"
+                >
+                  Ngày {sortConfig?.key === 'date' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th 
+                  onClick={() => handleSort('category')}
+                  className="px-3 py-2 font-bold text-slate-400 uppercase tracking-tighter text-[10px] cursor-pointer hover:bg-slate-100 transition-colors"
+                >
+                  Hạng mục {sortConfig?.key === 'category' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th 
+                  onClick={() => handleSort('params')}
+                  className="px-3 py-2 font-bold text-slate-400 uppercase tracking-tighter text-[10px] cursor-pointer hover:bg-slate-100 transition-colors"
+                >
+                  Thông số {sortConfig?.key === 'params' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th 
+                  onClick={() => handleSort('odo')}
+                  className="px-3 py-2 font-bold text-slate-400 uppercase tracking-tighter text-[10px] text-right cursor-pointer hover:bg-slate-100 transition-colors"
+                >
+                  Odo {sortConfig?.key === 'odo' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th 
+                  onClick={() => handleSort('nextOdo')}
+                  className="px-3 py-2 font-bold text-slate-400 uppercase tracking-tighter text-[10px] text-right cursor-pointer hover:bg-slate-100 transition-colors"
+                >
+                  Kỳ tới {sortConfig?.key === 'nextOdo' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th 
+                  onClick={() => handleSort('unitPrice')}
+                  className="px-3 py-2 font-bold text-slate-400 uppercase tracking-tighter text-[10px] text-right cursor-pointer hover:bg-slate-100 transition-colors"
+                >
+                  Đơn giá {sortConfig?.key === 'unitPrice' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th 
+                  onClick={() => handleSort('status')}
+                  className="px-3 py-2 font-bold text-slate-400 uppercase tracking-tighter text-[10px] text-center cursor-pointer hover:bg-slate-100 transition-colors"
+                >
+                  Status {sortConfig?.key === 'status' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th 
+                  onClick={() => handleSort('id')}
+                  className="px-3 py-2 font-bold text-slate-400 uppercase tracking-tighter text-[10px] text-center cursor-pointer hover:bg-slate-100 transition-colors"
+                >
+                  Xử lý {sortConfig?.key === 'id' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
