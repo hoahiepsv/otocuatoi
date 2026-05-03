@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Lock, Car, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -14,6 +14,13 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onQuickView }) => {
   const [showQuickInput, setShowQuickInput] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const savedPlate = localStorage.getItem('last_quick_plate');
+    if (savedPlate) {
+      setQuickPlate(savedPlate);
+    }
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +41,9 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onQuickView }) => {
   const handleQuickView = (e: React.FormEvent) => {
     e.preventDefault();
     if (quickPlate.trim()) {
-      onQuickView(quickPlate.toUpperCase().trim());
+      const normalized = quickPlate.toUpperCase().trim();
+      localStorage.setItem('last_quick_plate', normalized);
+      onQuickView(normalized);
     }
   };
 
@@ -136,6 +145,9 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onQuickView }) => {
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Nhập biển số xe:</label>
                   <div className="flex gap-2">
                     <input
+                      id="quick_license_plate"
+                      name="license_plate"
+                      autoComplete="on"
                       type="text"
                       required
                       autoFocus
