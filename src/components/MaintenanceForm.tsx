@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Save, PlusCircle, RotateCcw } from 'lucide-react';
 import { MaintenanceRecord } from '../types';
-import { formatNumber, parseFormattedNumber, formatDateForInput, formatDateDisplay, getTodayDateInput } from '../lib/utils';
+import { formatNumber, parseFormattedNumber, formatDateForInput, formatDateDisplay, getTodayDateInput, removeVietnameseTones } from '../lib/utils';
 import { motion } from 'motion/react';
 
 interface MaintenanceFormProps {
@@ -32,8 +32,130 @@ export const MaintenanceForm: React.FC<MaintenanceFormProps> = ({
     isDone: false
   });
 
-  const uniqueCategories = Array.from(new Set(allData.map(d => d.category))).filter(Boolean).sort();
-  const uniqueParams = Array.from(new Set(allData.map(d => d.params))).filter(Boolean).sort();
+  // Extract all unique individual categories from history
+  const allCategoryItems = useMemo(() => {
+    const set = new Set<string>();
+    allData.forEach(d => {
+      if (d.category) {
+        d.category.split('\n').forEach(line => {
+          const trimmed = line.trim();
+          if (trimmed) set.add(trimmed);
+        });
+      }
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'vi'));
+  }, [allData]);
+
+  const uniqueParams = useMemo(() => {
+    const list: string[] = [];
+    allData.forEach(d => {
+      const p = d.params?.trim();
+      if (p && !list.includes(p)) list.push(p);
+    });
+    return list.sort((a, b) => a.localeCompare(b, 'vi'));
+  }, [allData]);
+
+  // Current query in category (takes the last active line being typed)
+  const currentCategoryQuery = useMemo(() => {
+    if (!formData.category) return '';
+    const lines = formData.category.split('\n');
+    return lines[lines.length - 1].trim();
+  }, [formData.category]);
+
+  // Search categories: tone and case-insensitive.
+  // "Không ghi chú sẵn nếu chưa gõ nội dung hạng mục" -> empty if no query
+  const matchingCategories = useMemo(() => {
+    if (!currentCategoryQuery) return [];
+    const normalizedQuery = removeVietnameseTones(currentCategoryQuery);
+    return allCategoryItems.filter(cat => {
+      const normalizedCat = removeVietnameseTones(cat);
+      return normalizedCat.includes(normalizedQuery);
+    }).slice(0, 8);
+  }, [currentCategoryQuery, allCategoryItems]);
+
+  // Suggest params for the entered category:
+  // "Không ghi chú sẵn nếu chưa gõ nội dung hạng mục" -> empty if no category entered
+  const suggestedParams = useMemo(() => {
+    if (!formData.category.trim()) return [];
+
+    const categoryLines = formData.category
+      .split('\n')
+      .map(line => removeVietnameseTones(line.trim()))
+      .filter(Boolean);
+
+    if (categoryLines.length === 0) return [];
+
+    // Find historical records matching any category line
+    const matchedRecords = allData.filter(d => {
+      if (!d.params || !d.params.trim()) return false;
+      const dCatNorm = removeVietnameseTones(d.category || '');
+      return categoryLines.some(q => dCatNorm.includes(q) || q.includes(dCatNorm));
+    });
+
+    const paramsSet = new Set<string>();
+    matchedRecords.forEach(d => {
+      const trimmed = d.params.trim();
+      if (trimmed) paramsSet.add(trimmed);
+    });
+
+    let results = Array.from(paramsSet);
+
+    // If user is also typing in params, filter without accents/case
+    if (formData.params.trim()) {
+      const normP = removeVietnameseTones(formData.params.trim());
+      const filtered = results.filter(p => removeVietnameseTones(p).includes(normP));
+      if (filtered.length > 0) {
+        results = filtered;
+      } else {
+        results = uniqueParams.filter(p => removeVietnameseTones(p).includes(normP));
+      }
+    }
+
+    return results.slice(0, 8);
+  }, [formData.category, formData.params, allData, uniqueParams]);
+
+  const handleSelectCategorySuggestion = (cat: string) => {
+    setFormData(prev => {
+      const lines = prev.category.split('\n');
+      if (lines.length > 0) {
+        lines[lines.length - 1] = cat;
+      } else {
+        lines.push(cat);
+      }
+      const newCategory = lines.join('\n');
+
+      let newParams = prev.params;
+      let newUnitPrice = prev.unitPrice;
+
+      const normCat = removeVietnameseTones(cat);
+      const matched = allData.find(d => 
+        removeVietnameseTones(d.category || '').includes(normCat) && d.params?.trim()
+      );
+
+      if (matched) {
+        if (!newParams) {
+          newParams = matched.params;
+        }
+        if ((!newUnitPrice || newUnitPrice === '0') && matched.unitPrice) {
+          newUnitPrice = formatNumber(matched.unitPrice);
+        }
+      }
+
+      return {
+        ...prev,
+        category: newCategory,
+        params: newParams,
+        unitPrice: newUnitPrice
+      };
+    });
+  };
+
+  const handleSelectParamSuggestion = (param: string) => {
+    setFormData(prev => ({
+      ...prev,
+      params: param
+    }));
+  };
 
   const [interval, setIntervalValue] = useState('0');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -193,18 +315,28 @@ export const MaintenanceForm: React.FC<MaintenanceFormProps> = ({
 
           <div className="md:col-span-2 space-y-1">
             <label className="text-[11px] font-bold text-slate-500 uppercase tracking-tighter">HẠNG MỤC BẢO TRÌ</label>
-            <input 
-              type="text"
-              list="category-list"
+            <textarea 
+              rows={3}
               value={formData.category}
               onChange={(e) => setFormData({...formData, category: e.target.value})}
-              className="w-full px-3 py-2 bg-white border border-slate-300 rounded focus:ring-1 focus:ring-primary outline-none text-sm shadow-sm font-medium"
-              placeholder="VD: Thay dầu máy, Bảo trì phanh..."
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded focus:ring-1 focus:ring-primary outline-none text-sm shadow-sm font-medium resize-y"
               required
             />
-            <datalist id="category-list">
-              {uniqueCategories.map(cat => <option key={cat} value={cat} />)}
-            </datalist>
+            {matchingCategories.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-[10px] font-bold text-slate-400">Gợi ý nhanh:</span>
+                {matchingCategories.map(cat => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => handleSelectCategorySuggestion(cat)}
+                    className="text-[10px] bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-600 font-medium px-2 py-0.5 rounded border border-slate-200 transition-colors"
+                  >
+                    + {cat}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="space-y-1">
@@ -225,11 +357,25 @@ export const MaintenanceForm: React.FC<MaintenanceFormProps> = ({
               value={formData.params}
               onChange={(e) => setFormData({...formData, params: e.target.value})}
               className="w-full px-3 py-2 bg-white border border-slate-300 rounded focus:ring-1 focus:ring-primary outline-none text-sm shadow-sm"
-              placeholder="Nhập chi tiết kỹ thuật nếu có..."
             />
             <datalist id="params-list">
-              {uniqueParams.map(p => <option key={p} value={p} />)}
+              {suggestedParams.map(p => <option key={p} value={p} />)}
             </datalist>
+            {suggestedParams.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-[10px] font-bold text-slate-400">Gợi ý thông số:</span>
+                {suggestedParams.map(p => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => handleSelectParamSuggestion(p)}
+                    className="text-[10px] bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-600 font-medium px-2 py-0.5 rounded border border-slate-200 transition-colors"
+                  >
+                    + {p}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="space-y-1">

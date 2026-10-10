@@ -1,8 +1,9 @@
-import React from 'react';
-import { Bell, X, Info } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Bell, X, Info, FileImage, CheckSquare, Square, Wrench } from 'lucide-react';
 import { MaintenanceRecord } from '../types';
 import { formatNumber } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
+import { RepairProposalModal } from './RepairProposalModal';
 
 interface MaintenanceReminderProps {
   data: MaintenanceRecord[];
@@ -13,6 +14,9 @@ interface MaintenanceReminderProps {
 }
 
 export const MaintenanceReminder: React.FC<MaintenanceReminderProps> = ({ data, onClose, isOpen, filterPlate, isStatic }) => {
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [showProposalModal, setShowProposalModal] = useState(false);
+
   const plateMaxOdos = data.reduce((acc, curr) => {
     if (!acc[curr.licensePlate] || curr.odo > acc[curr.licensePlate]) {
       acc[curr.licensePlate] = curr.odo;
@@ -44,68 +48,161 @@ export const MaintenanceReminder: React.FC<MaintenanceReminderProps> = ({ data, 
     return item.nextOdo > 0 && diff <= 5000;
   });
 
+  // Sync selectedIds with reminderItems by default
+  useEffect(() => {
+    if (reminderItems.length > 0) {
+      setSelectedIds(new Set(reminderItems.map(item => item.id)));
+    } else {
+      setSelectedIds(new Set());
+    }
+  }, [data, filterPlate]);
+
   if (reminderItems.length === 0) return null;
 
+  const toggleSelect = (id: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === reminderItems.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(reminderItems.map(i => i.id)));
+    }
+  };
+
+  const selectedRecords = reminderItems.filter(item => selectedIds.has(item.id));
+
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div 
-          initial={isStatic ? { opacity: 0, scale: 0.95 } : { opacity: 0, x: 100, y: 100 }}
-          animate={isStatic ? { opacity: 1, scale: 1 } : { opacity: 1, x: 0, y: 0 }}
-          exit={isStatic ? { opacity: 0, scale: 0.95 } : { opacity: 0, x: 100, y: 100 }}
-          className={isStatic ? "w-full" : "fixed bottom-12 right-4 z-[90] w-full max-w-[320px]"}
-        >
-          <div className="bg-white rounded-xl shadow-2xl border border-blue-100 overflow-hidden ring-1 ring-black/5">
-            <div className="px-4 py-4 bg-blue-600 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-white font-black text-xs uppercase tracking-widest leading-none">
-                <Bell size={16} />
-                <span>NHẮC NHỞ ({reminderItems.length})</span>
+    <>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={isStatic ? { opacity: 0, scale: 0.95 } : { opacity: 0, x: 100, y: 100 }}
+            animate={isStatic ? { opacity: 1, scale: 1 } : { opacity: 1, x: 0, y: 0 }}
+            exit={isStatic ? { opacity: 0, scale: 0.95 } : { opacity: 0, x: 100, y: 100 }}
+            className={isStatic ? "w-full" : "fixed bottom-12 right-4 z-[90] w-full max-w-[340px]"}
+          >
+            <div className="bg-white rounded-xl shadow-2xl border border-blue-100 overflow-hidden ring-1 ring-black/5">
+              <div className="px-4 py-3 bg-blue-600 flex items-center justify-between text-white">
+                <div className="flex items-center gap-2 font-black text-xs uppercase tracking-widest leading-none">
+                  <Bell size={16} />
+                  <span>NHẮC NHỞ ({reminderItems.length})</span>
+                </div>
+                <button 
+                  onClick={onClose}
+                  className="text-blue-100 hover:text-white transition-colors"
+                >
+                  <X size={16} />
+                </button>
               </div>
-              <button 
-                onClick={onClose}
-                className="text-blue-100 hover:text-white transition-colors"
-              >
-                <X size={16} />
-              </button>
-            </div>
-            
-            <div className="p-0 max-h-[300px] overflow-y-auto divide-y divide-slate-50">
-              {reminderItems.map(item => {
-                const currentMax = plateMaxOdos[item.licensePlate] || 0;
-                const balanceKm = item.nextOdo - currentMax;
-                const isOverdue = balanceKm < 0;
-                
-                return (
-                  <div key={item.id} className="p-3 hover:bg-slate-50 transition-colors">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="font-bold text-slate-900 text-xs">{item.licensePlate}</span>
-                      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase ${
-                        isOverdue ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"
-                      }`}>
-                        {isOverdue ? `Quá ${formatNumber(Math.abs(balanceKm))}` : `Còn ${formatNumber(balanceKm)}`} KM
-                      </span>
+
+              {/* Selection Bar */}
+              <div className="px-3 py-2 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-[11px]">
+                <button
+                  type="button"
+                  onClick={toggleSelectAll}
+                  className="flex items-center gap-1.5 font-bold text-slate-600 hover:text-blue-600 transition-colors"
+                >
+                  {selectedIds.size === reminderItems.length ? (
+                    <CheckSquare size={14} className="text-blue-600" />
+                  ) : (
+                    <Square size={14} className="text-slate-400" />
+                  )}
+                  <span>{selectedIds.size === reminderItems.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}</span>
+                </button>
+                <span className="font-bold text-blue-600 text-[10px] uppercase">
+                  Đã chọn: {selectedIds.size}/{reminderItems.length}
+                </span>
+              </div>
+              
+              <div className="p-0 max-h-[300px] overflow-y-auto divide-y divide-slate-100">
+                {reminderItems.map(item => {
+                  const currentMax = plateMaxOdos[item.licensePlate] || 0;
+                  const balanceKm = item.nextOdo - currentMax;
+                  const isOverdue = balanceKm < 0;
+                  const isChecked = selectedIds.has(item.id);
+                  
+                  return (
+                    <div 
+                      key={item.id} 
+                      onClick={() => toggleSelect(item.id)}
+                      className={`p-3 hover:bg-blue-50/40 transition-colors cursor-pointer flex items-start gap-2.5 ${
+                        isChecked ? 'bg-blue-50/20' : ''
+                      }`}
+                    >
+                      <div className="pt-0.5 shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => {}} // Controlled by row click
+                          className="h-4 w-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer"
+                        />
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="font-bold text-slate-900 text-xs">{item.licensePlate}</span>
+                          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase ${
+                            isOverdue ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"
+                          }`}>
+                            {isOverdue ? `Quá ${formatNumber(Math.abs(balanceKm))}` : `Còn ${formatNumber(balanceKm)}`} KM
+                          </span>
+                        </div>
+                        <p className="text-[11px] font-medium text-slate-700 leading-snug whitespace-pre-line">
+                          {item.category} {item.params ? `(${item.params})` : ''}
+                        </p>
+                        <div className="mt-1.5 flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-tighter">
+                          <span className={isOverdue ? "text-red-500" : ""}>{isOverdue ? "Đã quá hạn:" : "Kỳ tới:"}</span>
+                          <span className="text-sm font-black text-orange-600">{formatNumber(item.nextOdo)} KM</span>
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-[11px] font-medium text-slate-700 leading-snug">
-                      {item.category}: {item.params}
-                    </p>
-                    <div className="mt-1.5 flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-tighter">
-                      <span className={isOverdue ? "text-red-500" : ""}>{isOverdue ? "Đã quá hạn:" : "Kỳ tới:"}</span>
-                      <span className="text-sm font-black text-orange-600">{formatNumber(item.nextOdo)} KM</span>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+
+              {/* Action Button: Xuất phiếu đề nghị sửa chữa */}
+              <div className="p-3 bg-slate-50 border-t border-slate-100 flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowProposalModal(true)}
+                  disabled={selectedRecords.length === 0}
+                  className="w-full py-2.5 px-3 bg-blue-600 hover:bg-blue-700 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all"
+                >
+                  <FileImage size={15} />
+                  <span>Xuất phiếu đề nghị ({selectedRecords.length})</span>
+                </button>
+
+                <div className="flex items-center gap-1.5 px-1">
+                  <Info size={11} className="text-blue-500 shrink-0" />
+                  <p className="text-[9px] text-blue-700 font-medium leading-tight">
+                    Tích chọn các mục cần làm và bấm xuất phiếu dạng hình ảnh.
+                  </p>
+                </div>
+              </div>
             </div>
-            
-            <div className="px-4 py-2 bg-slate-50 border-t border-slate-100 flex items-center gap-2">
-              <Info size={12} className="text-blue-500 shrink-0" />
-              <p className="text-[9px] text-blue-700 font-bold leading-tight">
-                Các hạng mục sắp tới hạn hoặc đã quá hạn bảo trì.
-              </p>
-            </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Repair Proposal Modal */}
+      {showProposalModal && (
+        <RepairProposalModal
+          isOpen={showProposalModal}
+          onClose={() => setShowProposalModal(false)}
+          records={selectedRecords}
+          currentPlateOdos={plateMaxOdos}
+        />
       )}
-    </AnimatePresence>
+    </>
   );
 };

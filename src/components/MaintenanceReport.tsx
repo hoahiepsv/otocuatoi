@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Download, Printer, FileText } from 'lucide-react';
+import { Download, Printer, FileText, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { MaintenanceRecord } from '../types';
 import { formatNumber, toSortableDate } from '../lib/utils';
 import { toJpeg } from 'html-to-image';
@@ -10,6 +10,8 @@ interface MaintenanceReportProps {
   selectedPlate: string;
   onPlateChange: (plate: string) => void;
 }
+
+export type ReportSortField = 'date' | 'licensePlate' | 'category' | 'odo' | 'nextOdo' | 'unitPrice';
 
 export const MaintenanceReport: React.FC<MaintenanceReportProps> = ({ 
   data, 
@@ -23,6 +25,22 @@ export const MaintenanceReport: React.FC<MaintenanceReportProps> = ({
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [startDate, setStartDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+
+  // Mặc định thông tin và lịch sử: sắp xếp nội dung gần nhất - cũ
+  const [sortConfig, setSortConfig] = useState<{ key: ReportSortField; direction: 'asc' | 'desc' }>({
+    key: 'date',
+    direction: 'desc'
+  });
+
+  const handleSort = (key: ReportSortField) => {
+    setSortConfig(prev => {
+      if (prev.key === key) {
+        return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
+      }
+      const defaultDesc = key === 'date' || key === 'unitPrice' || key === 'odo' || key === 'nextOdo';
+      return { key, direction: defaultDesc ? 'desc' : 'asc' };
+    });
+  };
 
   const plates = Array.from(new Set(data.map(item => item.licensePlate))).sort();
   
@@ -56,13 +74,33 @@ export const MaintenanceReport: React.FC<MaintenanceReportProps> = ({
     
     return true;
   }).sort((a, b) => {
-    // Sort by plate first
-    if (a.licensePlate !== b.licensePlate) {
-      return a.licensePlate.localeCompare(b.licensePlate);
+    const { key, direction } = sortConfig;
+    let comparison = 0;
+
+    if (key === 'date') {
+      const dateA = toSortableDate(a.date);
+      const dateB = toSortableDate(b.date);
+      comparison = dateA.localeCompare(dateB);
+    } else if (key === 'licensePlate') {
+      comparison = a.licensePlate.localeCompare(b.licensePlate);
+    } else if (key === 'category') {
+      comparison = a.category.localeCompare(b.category);
+    } else if (key === 'odo') {
+      comparison = a.odo - b.odo;
+    } else if (key === 'nextOdo') {
+      comparison = a.nextOdo - b.nextOdo;
+    } else if (key === 'unitPrice') {
+      comparison = a.unitPrice - b.unitPrice;
     }
-    
-    // Then by date
-    return toSortableDate(a.date).localeCompare(toSortableDate(b.date));
+
+    if (comparison !== 0) {
+      return direction === 'asc' ? comparison : -comparison;
+    }
+
+    // Tie-breaker: date descending (gần nhất - cũ), then id descending
+    const dateTie = toSortableDate(b.date).localeCompare(toSortableDate(a.date));
+    if (dateTie !== 0) return dateTie;
+    return b.id - a.id;
   });
 
   const totalCost = filteredData.reduce((sum, item) => sum + item.unitPrice, 0);
@@ -252,8 +290,21 @@ export const MaintenanceReport: React.FC<MaintenanceReportProps> = ({
       <div className="bg-slate-900/5 p-4 rounded-lg overflow-x-auto border border-app-border">
         {/* Mobile-only List View */}
         <div className="md:hidden space-y-3 mb-4">
-          <div className="bg-blue-600 p-3 rounded-t-lg text-white font-black text-xs uppercase tracking-widest text-center shadow-lg">
-            DANH SÁCH LỊCH SỬ CHI TIẾT
+          <div className="bg-blue-600 p-3 rounded-t-lg text-white font-black text-xs uppercase tracking-widest flex items-center justify-between shadow-lg">
+            <span>DANH SÁCH LỊCH SỬ</span>
+            <div className="flex items-center gap-1.5 text-[10px]">
+              <span className="opacity-80 font-normal">Sắp xếp:</span>
+              <button 
+                type="button"
+                onClick={() => handleSort('date')}
+                className="bg-blue-700 hover:bg-blue-800 text-white font-bold px-2 py-0.5 rounded border border-blue-400/40 flex items-center gap-1"
+              >
+                <span>Ngày</span>
+                {sortConfig.key === 'date' && (
+                  <span>{sortConfig.direction === 'desc' ? '↓ Gần nhất' : '↑ Cũ nhất'}</span>
+                )}
+              </button>
+            </div>
           </div>
           {filteredData.length === 0 ? (
             <div className="bg-white p-12 text-center text-slate-400 italic text-[11px] rounded-b-lg border border-slate-200">
@@ -268,7 +319,7 @@ export const MaintenanceReport: React.FC<MaintenanceReportProps> = ({
                     <span className="text-[10px] font-bold text-slate-400">{item.date}</span>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-[12px] font-bold text-slate-800">{item.category}</p>
+                    <p className="text-[12px] font-bold text-slate-800 whitespace-pre-line leading-relaxed">{item.category}</p>
                     {item.params && <p className="text-[10px] text-slate-400 uppercase font-medium">{item.params}</p>}
                   </div>
                   <div className="flex justify-between items-end pt-2">
@@ -355,14 +406,98 @@ export const MaintenanceReport: React.FC<MaintenanceReportProps> = ({
 
           <table className="w-full border-collapse border border-slate-200 text-[13px] shadow-sm">
             <thead>
-              <tr className="bg-blue-900 text-white">
-                <th className="border border-blue-900 p-4 text-center w-12 font-bold uppercase text-[11px] tracking-widest">STT</th>
-                <th className="border border-blue-900 p-4 text-left font-bold uppercase text-[11px] tracking-widest">Số Xe</th>
-                <th className="border border-blue-900 p-4 text-center font-bold uppercase text-[11px] tracking-widest">Ngày</th>
-                <th className="border border-blue-900 p-4 text-left font-bold uppercase text-[11px] tracking-widest">Nội dung / Thông số</th>
-                <th className="border border-blue-900 p-4 text-right font-bold uppercase text-[11px] tracking-widest">Odo (KM)</th>
-                <th className="border border-blue-900 p-4 text-right font-bold uppercase text-[11px] tracking-widest">Kế tiếp</th>
-                <th className="border border-blue-900 p-4 text-right font-bold uppercase text-[11px] tracking-widest">Thành Tiền</th>
+              <tr className="bg-blue-900 text-white select-none">
+                <th 
+                  onClick={() => handleSort('date')}
+                  className="border border-blue-900 p-3 sm:p-4 text-center w-14 font-bold uppercase text-[11px] tracking-widest cursor-pointer hover:bg-blue-800 transition-colors"
+                  title="Sắp xếp theo ngày"
+                >
+                  STT
+                </th>
+                <th 
+                  onClick={() => handleSort('licensePlate')}
+                  className="border border-blue-900 p-3 sm:p-4 text-left font-bold uppercase text-[11px] tracking-widest cursor-pointer hover:bg-blue-800 transition-colors"
+                  title="Bấm để sắp xếp theo Số Xe"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span>Số Xe</span>
+                    {sortConfig.key === 'licensePlate' ? (
+                      sortConfig.direction === 'asc' ? <ArrowUp size={13} className="text-amber-300" /> : <ArrowDown size={13} className="text-amber-300" />
+                    ) : (
+                      <ArrowUpDown size={12} className="opacity-40" />
+                    )}
+                  </div>
+                </th>
+                <th 
+                  onClick={() => handleSort('date')}
+                  className="border border-blue-900 p-3 sm:p-4 text-center font-bold uppercase text-[11px] tracking-widest cursor-pointer hover:bg-blue-800 transition-colors"
+                  title="Bấm để sắp xếp theo Ngày (Gần nhất - Cũ)"
+                >
+                  <div className="flex items-center justify-center gap-1.5">
+                    <span>Ngày</span>
+                    {sortConfig.key === 'date' ? (
+                      sortConfig.direction === 'asc' ? <ArrowUp size={13} className="text-amber-300" /> : <ArrowDown size={13} className="text-amber-300" />
+                    ) : (
+                      <ArrowUpDown size={12} className="opacity-40" />
+                    )}
+                  </div>
+                </th>
+                <th 
+                  onClick={() => handleSort('category')}
+                  className="border border-blue-900 p-3 sm:p-4 text-left font-bold uppercase text-[11px] tracking-widest cursor-pointer hover:bg-blue-800 transition-colors"
+                  title="Bấm để sắp xếp theo Hạng mục"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span>Nội dung / Thông số</span>
+                    {sortConfig.key === 'category' ? (
+                      sortConfig.direction === 'asc' ? <ArrowUp size={13} className="text-amber-300" /> : <ArrowDown size={13} className="text-amber-300" />
+                    ) : (
+                      <ArrowUpDown size={12} className="opacity-40" />
+                    )}
+                  </div>
+                </th>
+                <th 
+                  onClick={() => handleSort('odo')}
+                  className="border border-blue-900 p-3 sm:p-4 text-right font-bold uppercase text-[11px] tracking-widest cursor-pointer hover:bg-blue-800 transition-colors"
+                  title="Bấm để sắp xếp theo Odo"
+                >
+                  <div className="flex items-center justify-end gap-1.5">
+                    <span>Odo (KM)</span>
+                    {sortConfig.key === 'odo' ? (
+                      sortConfig.direction === 'asc' ? <ArrowUp size={13} className="text-amber-300" /> : <ArrowDown size={13} className="text-amber-300" />
+                    ) : (
+                      <ArrowUpDown size={12} className="opacity-40" />
+                    )}
+                  </div>
+                </th>
+                <th 
+                  onClick={() => handleSort('nextOdo')}
+                  className="border border-blue-900 p-3 sm:p-4 text-right font-bold uppercase text-[11px] tracking-widest cursor-pointer hover:bg-blue-800 transition-colors"
+                  title="Bấm để sắp xếp theo Odo kỳ tới"
+                >
+                  <div className="flex items-center justify-end gap-1.5">
+                    <span>Kế tiếp</span>
+                    {sortConfig.key === 'nextOdo' ? (
+                      sortConfig.direction === 'asc' ? <ArrowUp size={13} className="text-amber-300" /> : <ArrowDown size={13} className="text-amber-300" />
+                    ) : (
+                      <ArrowUpDown size={12} className="opacity-40" />
+                    )}
+                  </div>
+                </th>
+                <th 
+                  onClick={() => handleSort('unitPrice')}
+                  className="border border-blue-900 p-3 sm:p-4 text-right font-bold uppercase text-[11px] tracking-widest cursor-pointer hover:bg-blue-800 transition-colors"
+                  title="Bấm để sắp xếp theo Thành tiền"
+                >
+                  <div className="flex items-center justify-end gap-1.5">
+                    <span>Thành Tiền</span>
+                    {sortConfig.key === 'unitPrice' ? (
+                      sortConfig.direction === 'asc' ? <ArrowUp size={13} className="text-amber-300" /> : <ArrowDown size={13} className="text-amber-300" />
+                    ) : (
+                      <ArrowUpDown size={12} className="opacity-40" />
+                    )}
+                  </div>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -388,8 +523,8 @@ export const MaintenanceReport: React.FC<MaintenanceReportProps> = ({
                     <td className={`border-x border-slate-200 p-3 font-black uppercase text-center ${plateColor}`}>{item.licensePlate}</td>
                     <td className="border-x border-slate-200 p-3 text-slate-600 font-medium text-center">{item.date}</td>
                     <td className="border-x border-slate-200 p-3">
-                      <div className="font-bold text-slate-800">{item.category}</div>
-                      {item.params && <div className="text-[10px] text-slate-400 uppercase font-medium">{item.params}</div>}
+                      <div className="font-bold text-slate-800 whitespace-pre-line leading-relaxed">{item.category}</div>
+                      {item.params && <div className="text-[10px] text-slate-400 uppercase font-medium mt-0.5">{item.params}</div>}
                     </td>
                     <td className="border-x border-slate-200 p-3 text-right font-mono font-bold text-slate-500">{formatNumber(item.odo)}</td>
                     <td className="border-x border-slate-200 p-3 text-right font-mono font-bold text-orange-400">
