@@ -230,6 +230,19 @@ export default function App() {
             <MaintenanceTable 
               data={data} 
               onEdit={handleEdit} 
+              onUpdateStatus={async (record, isDone) => {
+                await handleUpsert({
+                  id: record.id,
+                  licensePlate: record.licensePlate,
+                  date: record.date,
+                  category: record.category,
+                  params: record.params,
+                  odo: record.odo,
+                  nextOdo: record.nextOdo,
+                  unitPrice: record.unitPrice,
+                  isDone
+                });
+              }}
               selectedPlate={selectedPlate}
               onPlateChange={setSelectedPlate}
             />
